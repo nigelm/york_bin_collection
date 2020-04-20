@@ -11,6 +11,9 @@ This script is intended to work as a shim between the York Bin Collection data
 and [Home Assistant](https://www.home-assistant.io/).  It is made available
 under the Apache 2.0 License
 
+Currently this is the first attempt and needs a little polish and error
+checking.
+
 ## Usage
 
     $ york_bin_collection.py UPRN
@@ -24,10 +27,10 @@ The output is a JSON dictionary, with the following keys:-
 - `next_collection_types` - an array of strings giving the type(s) of the next bin collection
 - `updated` - the datetime that the data was last updated
 
-Additionally there is one entry for each bin collection type for the property
-- keyed on the value of `ImageName` within the API data (which is a short
-lowercase string).  For a typical residential properly this would be something
-like:-
+Additionally there is one entry for each bin collection type for the property,
+which is keyed on the value of `ImageName` within the API data (which is a
+short lowercase string).  For a typical residential properly this would be
+something like:-
 
 - `blackbin` - The standard non-recyclable refuse
 - `greenbin` - The garden waste bin
