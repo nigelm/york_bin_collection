@@ -44,7 +44,6 @@ def retrieve_collection_data(uprn):
     """Retrieve the Bin collection data for a UPRN."""
     url = Template(YORK_BIN_API).substitute(uprn=uprn)
     try:
-        print(url)
         r = requests.get(url)
         json = r.json()
     except ConnectionError:
@@ -52,7 +51,6 @@ def retrieve_collection_data(uprn):
     except ValueError:
         sys.exit("Unable to decode result from York bin collection API")
 
-    print(json)
     return json
 
 
