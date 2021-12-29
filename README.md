@@ -14,6 +14,7 @@ under the Apache 2.0 License
 Currently this is the first attempt and needs a little polish and error
 checking.
 
+
 ## Usage
 
     $ york_bin_collection.py UPRN
@@ -35,6 +36,7 @@ something like:-
 - `blackbin` - The standard non-recyclable refuse
 - `greenbin` - The garden waste bin
 - `box` - The recycling boxes (typically three boxes)
+
 
 ## Update 2021
 
@@ -82,74 +84,45 @@ You can then use the `Developer Tools` section to see the sensor data - go to
 see something along the lines of state being `2020-04-24` and the State
 attributes in YAML looking like:-
 
-    next_collection: '2020-04-24'
-    next_collection_types:
-      - blackbin
-    blackbin:
-      BinType: GREY 180
-      BinTypeDescription: Grey Bin 180L
-      CollectionDay: FRI
-      CollectionDayFull: Friday
-      CollectionDayOfWeek: 5
-      CollectionFrequency: Alternate Weeks
-      CollectionFrequencyShort: WEEK 2
-      CollectionPoint: FRONT
-      CollectionPointDescription: Edge of Property at Front
-      CollectionPointLocation: null
-      CollectionType: GREY BIN/SACK
-      CollectionTypeDescription: Grey Bin/Black Sack Collection
-      ImageName: blackbin
-      Locality: null
-      MaterialsCollected: General Domestic
-      NumberOfBins: '1'
-      WasteType: GREY BIN/SACK
-      WasteTypeDescription: Grey Bin/Black Sack Collection
-      last: '2020-04-10'
-      next: '2020-04-24'
-    greenbin:
-      BinType: GREEN 180
-      BinTypeDescription: Green Bin 180L
-      CollectionDay: FRI
-      CollectionDayFull: Friday
-      CollectionDayOfWeek: 5
-      CollectionFrequency: Alternate Weeks
-      CollectionFrequencyShort: WEEK 1
-      CollectionPoint: FRONT
-      CollectionPointDescription: Edge of Property at Front
-      CollectionPointLocation: null
-      CollectionType: GREEN
-      CollectionTypeDescription: Green Collection
-      ImageName: greenbin
-      Locality: null
-      MaterialsCollected: Garden Waste
-      NumberOfBins: '1'
-      WasteType: GREEN
-      WasteTypeDescription: Green Collection
-      last: '2019-11-29'
-      next: null
-    box:
-      BinType: BOX 55
-      BinTypeDescription: Box 55L
-      CollectionDay: FRI
-      CollectionDayFull: Friday
-      CollectionDayOfWeek: 5
-      CollectionFrequency: Alternate Weeks
-      CollectionFrequencyShort: WEEK 1
-      CollectionPoint: FRONT
-      CollectionPointDescription: Edge of Property at Front
-      CollectionPointLocation: null
-      CollectionType: KERBSIDE
-      CollectionTypeDescription: Kerbside Collection
-      ImageName: box
-      Locality: null
-      MaterialsCollected: 'Paper/Card : Plastic/Cans : Glass'
-      NumberOfBins: '3'
-      WasteType: KERBSIDE
-      WasteTypeDescription: Kerbside Collection
-      last: '2020-04-17'
-      next: '2020-05-01'
-    updated: '2020-04-20 16:25:55.918518'
-    friendly_name: Bin Collection
+```yaml
+blackbin:
+  ImageName: blackbin
+  binDescription: 180L GREY RUBBISH BIN x1
+  collectedBy: City of York Council
+  frequency: Every alternate Fri
+  last: '2021-12-17'
+  lastCollected: '2021-12-17T00:00:00'
+  next: '2021-12-31'
+  nextCollection: '2021-12-31T00:00:00'
+  service: REFUSE
+  wasteType: General domestic
+box:
+  ImageName: box
+  binDescription: 55L BLACK RECYCLING BOX x3
+  collectedBy: City of York Council
+  frequency: Every alternate Fri
+  last: '2021-12-24'
+  lastCollected: '2021-12-24T00:00:00'
+  next: '2022-01-07'
+  nextCollection: '2022-01-07T00:00:00'
+  service: RECYCLING
+  wasteType: Paper/card, plastic/cans, glass
+greenbin:
+  ImageName: greenbin
+  binDescription: 180L GREEN GARDEN BIN x1
+  collectedBy: City of York Council
+  frequency: ''
+  last: '2021-11-26'
+  lastCollected: '2021-11-26T00:00:00'
+  next: '2022-03-18'
+  nextCollection: '2022-03-18T00:00:00'
+  service: GARDEN
+  wasteType: Garden waste
+next_collection: '2021-12-31'
+next_collection_types:
+- blackbin
+updated: '2021-12-29T17:59:29.010803+00:00'
+```
 
 This data can then be used in other automations.
 
