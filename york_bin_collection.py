@@ -15,61 +15,59 @@ Assistant sensor.
 
 """
 __author__ = ["[Nigel Metheringham](https://blog.dotdot.cloud/)"]
-__date__ = "2020-04-20"
+__date__ = "2021-12-29"
 
 import json
 import re
 import sys
 from datetime import date, datetime, timezone
+from string import Template
 
 import requests
 
 YORK_BIN_API = (
-    "https://doitonline.york.gov.uk/BinsApi/EXOR/getWasteCollectionDatabyUprn"
+    "https://waste-api.york.gov.uk/api/Collections/GetBinCollectionDataForUprn/$uprn"
 )
 YORK_BIN_ATTRIBUTES = (
-    "BinType",
-    "BinTypeDescription",
-    "CollectionDay",
-    "CollectionDayFull",
-    "CollectionDayOfWeek",
-    "CollectionFrequency",
-    "CollectionFrequencyShort",
-    "CollectionPoint",
-    "CollectionPointDescription",
-    "CollectionPointLocation",
-    "CollectionType",
-    "CollectionTypeDescription",
-    "ImageName",
-    "Locality",
-    "MaterialsCollected",
-    "NumberOfBins",
-    "WasteType",
-    "WasteTypeDescription",
+    "binDescription",
+    "collectedBy",
+    "frequency",
+    "lastCollected",
+    "nextCollection",
+    "service",
+    "wasteType",
 )
+YORK_BIN_MAPPING = {"GARDEN": "greenbin", "RECYCLING": "box", "REFUSE": "blackbin"}
 
 
 def retrieve_collection_data(uprn):
     """Retrieve the Bin collection data for a UPRN."""
-    payload = {"uprn": uprn}
+    url = Template(YORK_BIN_API).substitute(uprn=uprn)
     try:
-        r = requests.get(YORK_BIN_API, params=payload)
+        print(url)
+        r = requests.get(url)
         json = r.json()
     except ConnectionError:
         sys.exit("Unable to connect to the York bin collection API")
     except ValueError:
         sys.exit("Unable to decode result from York bin collection API")
 
+    print(json)
     return json
 
 
 def extract_date(datestr):
     """Extract a date from the JSON date info."""
     match = re.search(r"Date\((\d+)\)", datestr)
+    altmatch = re.search(r"2\d{3}-\d{2}-\d{2}", datestr)
     if match:
         epoch = int(match.group(1)) / 1000
         result = date.fromtimestamp(epoch)
         return result
+    elif altmatch:
+        result = date.fromisoformat(datestr[:10])
+        return result
+
     return None
 
 
@@ -78,16 +76,18 @@ def munge_data(data):
     result = {}
     next_collection = None
     next_collection_types = None
-    for chunk in data:
-        section = chunk["ImageName"]
+    for chunk in data["services"]:
+        section = YORK_BIN_MAPPING[chunk["service"]]
         section_data = {
-            "last": extract_date(chunk["LastCollection"]),
-            "next": extract_date(chunk["NextCollection"]),
+            "last": extract_date(chunk["lastCollected"]),
+            "next": extract_date(chunk["nextCollection"]),
+            "ImageName": section,
         }
 
         # copy all the attributes across
         for item in YORK_BIN_ATTRIBUTES:
-            section_data[item] = chunk[item]
+            if item in chunk:
+                section_data[item] = chunk[item]
 
         # package this into the result
         result[section] = section_data

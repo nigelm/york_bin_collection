@@ -36,6 +36,19 @@ something like:-
 - `greenbin` - The garden waste bin
 - `box` - The recycling boxes (typically three boxes)
 
+## Update 2021
+
+At some point in 2021 the API I was using stopped working - in general it
+failed to return any data. Later the API documentation was updated although
+the datestamps did not appear to have been modified.  The new API is similar,
+but less detailed, and of course most of the JSON keys have changed (there is
+now a preference for the first character of a key to be lower case unlike
+previously).
+
+The code has been updated to work with the new API, including some partial
+remapping of service types to the old version.
+
+
 ## Use With Home Assistant
 
 Install the script into /config (or other accessible directory), and ensure
