@@ -15,9 +15,11 @@ Assistant sensor.
 
 """
 __author__ = ["[Nigel Metheringham](https://blog.dotdot.cloud/)"]
-__date__ = "2021-12-29"
+__date__ = "2023-10-09"
 
 import datetime
+from typing import Any
+import re
 import hassapi as hass
 from string import Template
 from typing import Optional
@@ -25,16 +27,7 @@ import requests
 
 # -----------------------------------------------------------------------
 YORK_BIN_API = "https://waste-api.york.gov.uk/api/Collections/GetBinCollectionDataForUprn/$uprn"
-YORK_BIN_ATTRIBUTES = (
-    "binDescription",
-    "collectedBy",
-    "frequency",
-    "lastCollected",
-    "nextCollection",
-    "service",
-    "wasteType",
-)
-YORK_BIN_MAPPING = {"GARDEN": "greenbin", "RECYCLING": "box", "REFUSE": "blackbin"}
+YORK_BIN_ICON_MAPPING = {"GARDEN": "mdi:pine-tree", "RECYCLING": "mdi:recycle", "REFUSE": "mdi:delete"}
 
 
 # -----------------------------------------------------------------------
@@ -51,57 +44,18 @@ class YorkBinCollection(hass.Hass):
     # -----------------------------------------------------------------------
     def fetch_and_store_collection_data(self, kwargs: Optional[dict] = None):
         self.log("Starting collection")
-        self.retrieve_collection_data(self.args["uprn"])
-        self.update_sensors(self.args["entity"])
+        data = self.retrieve_collection_data(self.args["uprn"])
+        self.update_sensors(self.args["entity"], data)
 
     # -----------------------------------------------------------------------
-    def update_sensors(self, base_name: str):
+    def update_sensors(self, sort_name: str, data: dict[str, Any]):
         # first find the types that will be collected next
-        sorted_collections = sorted(self.collected_data["services"], key=lambda x: x["nextCollection"])
-        next_collection = sorted_collections[0]["nextCollection"]
-        collection_types = []
-        collection_description = []
-        for collection in sorted_collections:
-            if collection["nextCollection"] > next_collection:
-                break
-            collection_types.append(collection["service"])
-            collection_description.append(collection["wasteType"])
+        today = self.get_state("sensor.date")
+        attributes = self.build_attributes(data, today)
         self.set_state(
-            f"{base_name}_next_collection",
-            state=next_collection[:10],
-            attributes={"friendly_name": "Next Bin Collection Date"},
-        )
-        self.set_state(
-            f"{base_name}_collection_types",
-            state=collection_types,
-            attributes={"friendly_name": "Bin Collection Types"},
-        )
-        self.set_state(
-            f"{base_name}_collection_descriptions",
-            state=collection_description,
-            attributes={"friendly_name": "Bin Collection Type Descriptions"},
-        )
-        self.set_state(
-            f"{base_name}_collection_description",
-            state=", ".join(collection_description),
-            attributes={"friendly_name": "Bin Collection Description"},
-        )
-        self.set_state(
-            f"{base_name}_is_today",
-            state=True if datetime.date.today().isoformat() == next_collection else False,
-            attributes={"friendly_name": "Bin Collection is Today"},
-        )
-        self.set_state(
-            f"{base_name}_is_tomorrow",
-            state=True
-            if (datetime.date.today() + datetime.timedelta(days=1)).isoformat() == next_collection
-            else False,
-            attributes={"friendly_name": "Bin Collection is Tomorrow"},
-        )
-        self.set_state(
-            f"{base_name}_updated",
-            state=datetime.date.today().isoformat(),
-            attributes={"friendly_name": "Bin Collection Last Update"},
+            sort_name,
+            state=attributes["next_collection"].isoformat(),
+            attributes=attributes,
         )
         self.log("Updated sensor values")
 
@@ -122,6 +76,48 @@ class YorkBinCollection(hass.Hass):
 
         self.collected_data = data
         return data
+
+    # -----------------------------------------------------------------------
+    def extract_date(self, datestr):
+        """Extract a date from the JSON date info."""
+        match = re.search(r"Date\((\d+)\)", datestr)
+        altmatch = re.search(r"2\d{3}-\d{2}-\d{2}", datestr)
+        if match:
+            epoch = int(match.group(1)) / 1000
+            result = datetime.date.fromtimestamp(epoch)
+            return result
+        elif altmatch:
+            result = datetime.date.fromisoformat(datestr[:10])
+            return result
+
+        return None
+
+    # -----------------------------------------------------------------------
+    def build_attributes(self, data, today):
+        """Rearrange bin collection data to be more useful."""
+        service_data = sorted(self.collected_data["services"], key=lambda x: x["nextCollection"])
+        today_date = self.extract_date(today)
+        next_collection = self.extract_date(service_data[0]["nextCollection"])
+        next_collection_types = []
+        result = dict(
+            services=[],
+            next_collection=next_collection,
+            next_collection_types=next_collection_types,
+            friendly_name="Bin Collection",
+            is_today=True if next_collection == today_date else False,
+            is_tomorrow=True if next_collection == (today_date + datetime.timedelta(days=1)) else False,
+        )
+        for chunk in service_data:
+            chunk["lastCollected"] = self.extract_date(chunk["lastCollected"])
+            chunk["nextCollection"] = self.extract_date(chunk["nextCollection"])
+            chunk["icon"] = YORK_BIN_ICON_MAPPING[chunk["service"]]
+
+            if next_collection == chunk["nextCollection"]:
+                next_collection_types.append(chunk)
+
+            result[chunk["service"]] = chunk
+
+        return result
 
     # -----------------------------------------------------------------------
 

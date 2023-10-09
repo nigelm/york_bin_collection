@@ -1,0 +1,9 @@
+# .prettierrc or .prettierrc.yaml
+printWidth: 100
+overrides:
+  # markdown files should be wrapped with lower width
+  - files: "*.md"
+    options:
+      proseWrap: "always"
+      printWidth: 80
+# end
